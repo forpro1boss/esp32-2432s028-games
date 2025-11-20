@@ -33,4 +33,4 @@ jobs:
         with:
           name: firmware
           path: |
-            .pioenvs/esp32_2432s028/firmware.bin
+            .pioenvs/**/firmware.bin
