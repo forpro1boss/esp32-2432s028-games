@@ -27,6 +27,7 @@ ota:
 
 # ---------- SPI bus ----------
 spi:
+  id: spi_bus
   clk_pin: 18
   mosi_pin: 23
   miso_pin: 19
@@ -120,12 +121,12 @@ font:
 # Подключается через SPI. Убедись, что CS и IRQ совпадают с твоими проводами.
 touchscreen:
   - platform: xpt2046
-    name: "TFT Touch"
     id: tft_touch
     cs_pin: 21            # поменяй если у тебя другой CS
-    irq_pin: 15           # T_IRQ (если нет IRQ, можно не указывать)
-    spi_id: spi
+    interrupt_pin: 15     # T_IRQ (если нет IRQ, можно не указывать)
+    spi_id: spi_bus
     update_interval: 50ms
+    calibration: [300, 3800, 300, 3800]
     on_touch:
       then:
         - lambda: |-
