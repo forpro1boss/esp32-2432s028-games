@@ -31,10 +31,10 @@ spi:
   mosi_pin: 23
   miso_pin: 19
 
-# ---------- TFT Display (ILI9341) ----------
+# ---------- TFT Display (ILI9341 -> ili9xxx) ----------
 display:
-  - platform: ili9341
-    model: TFT 2.8
+  - platform: ili9xxx
+    model: ili9341
     cs_pin: 5
     dc_pin: 16
     reset_pin: 17
