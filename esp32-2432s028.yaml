@@ -191,25 +191,3 @@ status_led:
 #       then:
 #         - lambda: |-
 #             // кнопки можно использовать для управления играми
-esphome:
-  name: esp32_2432s028_games
-
-# Платформу `ESP32` указываем в отдельном блоке `esp32` (новый стиль конфигурации)
-esp32:
-  board: esp32dev
-  framework:
-    type: arduino
-
-# ---------- WIFI / OTA / API ----------
-wifi:
-  ssid: "YOUR_WIFI"
-  password: "YOUR_PASS"
-
-logger:
-  level: DEBUG
-
-api:
-
-ota:
-  platform: esphome
-
