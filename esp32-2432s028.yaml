@@ -1,26 +1,215 @@
 esphome:
-  name: esp32_2432s028
+  name: esp32_2432s028_games
 
+# ---------- ESP32 / board / framework ----------
 esp32:
   board: esp32dev
+  framework:
+    type: arduino
 
+# ---------- WIFI / OTA / API ----------
 wifi:
-  ssid: "YOUR_SSID"
-  password: "YOUR_PASSWORD"
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
-  ap:
-    ssid: "Esp32 Fallback AP"
+  ssid: "YOUR_WIFI"
+  password: "YOUR_PASS"
+
+# optional static IP example (закомментируй, если не нужно)
+#   manual_ip:
+#     static_ip: 192.168.1.50
+#     gateway: 192.168.1.1
+#     subnet: 255.255.255.0
 
 logger:
+  level: DEBUG
 
-# API (default settings)
 api:
-
-# OTA: specify platform for newer ESPHome versions
 ota:
   platform: esphome
-# Simple status LED example (adjust pin as needed)
+
+# ---------- SPI bus ----------
+spi:
+  clk_pin: 18
+  mosi_pin: 23
+  miso_pin: 19
+
+# ---------- TFT Display (ILI9341) ----------
+display:
+  - platform: ili9341
+    model: TFT 2.8
+    cs_pin: 5
+    dc_pin: 16
+    reset_pin: 17
+    rotation: 0
+    lambda: |-
+      // простой UI: меню / игры / часы
+      static int screen = 0; // 0=menu,1=snake,2=tetris,3=clock
+      static unsigned long last_update = 0;
+      unsigned long now = millis();
+
+      // draw menu
+      if (screen == 0) {
+        it.fill(COLOR_BLACK);
+        it.printf(16, 10, id(font24), "ESP32 Games");
+        it.printf(16, 50, id(font18), "%s Snake", (id(menu_idx)==0) ? ">" : " ");
+        it.printf(16, 80, id(font18), "%s Tetris", (id(menu_idx)==1) ? ">" : " ");
+        it.printf(16, 110, id(font18), "%s Clock", (id(menu_idx)==2) ? ">" : " ");
+        it.printf(16, 140, id(font14), "Touch: tap left/right/up/down");
+      }
+
+      // simple snake (very basic, playable-ish on ESPhome)
+      if (screen == 1) {
+        // draw border
+        it.fill(COLOR_BLACK);
+        it.printf(6, 4, id(font18), "Snake");
+        // draw play area and a moving square as placeholder snake
+        static int px = 40;
+        if (now - last_update > 150) {
+          px += id(snake_dx);
+          if (px < 10) px = 10;
+          if (px > 220) px = 220;
+          last_update = now;
+        }
+        it.draw_rect(8, 30, 304, 200);
+        it.fill_rect(px, 80, 10, 10);
+      }
+
+      // simple tetris placeholder (falling block)
+      if (screen == 2) {
+        it.fill(COLOR_BLACK);
+        it.printf(6, 4, id(font18), "Tetris");
+        static int ty = 0;
+        if (now - last_update > 400) { ty += 12; if (ty > 160) ty = 0; last_update = now; }
+        it.draw_rect(8, 30, 140, 200);
+        it.fill_rect(60, 30 + ty, 28, 28);
+      }
+
+      // clock screen
+      if (screen == 3) {
+        it.fill(COLOR_BLACK);
+        it.printf(16, 10, id(font24), "Clock");
+        // use time component to get current time
+        if (id(time_valid)) {
+          char buf[32];
+          time_t t = id(current_time);
+          struct tm *tm = localtime(&t);
+          strftime(buf, sizeof(buf), "%H:%M:%S", tm);
+          it.printf(24, 60, id(font36), buf);
+          strftime(buf, sizeof(buf), "%Y-%m-%d", tm);
+          it.printf(24, 110, id(font18), buf);
+        } else {
+          it.printf(24, 60, id(font18), "No time sync");
+        }
+      }
+
+# ---------- Fonts ----------
+font:
+  - file: "fonts/Roboto-Regular.ttf"
+    id: font14
+    size: 14
+  - file: "fonts/Roboto-Regular.ttf"
+    id: font18
+    size: 18
+  - file: "fonts/Roboto-Regular.ttf"
+    id: font24
+    size: 24
+  - file: "fonts/Roboto-Regular.ttf"
+    id: font36
+    size: 36
+
+# ---------- Touchscreen XPT2046 ----------
+# Подключается через SPI. Убедись, что CS и IRQ совпадают с твоими проводами.
+xpt2046:
+  cs_pin: 21            # поменяй если у тебя другой CS
+  irq_pin: 15           # T_IRQ (если нет IRQ, можно не указывать)
+  spi_id: spi
+
+touchscreen:
+  - platform: xpt2046
+    name: "TFT Touch"
+    id: tft_touch
+    update_interval: 50ms
+    on_touch:
+      then:
+        - lambda: |-
+            // Координаты тача (0..4095) -> нормируем на разрешение 320x240
+            int x = int(x_raw * 320.0 / 4095.0);
+            int y = int(y_raw * 240.0 / 4095.0);
+            // simple mapping for menu: верхняя/нижняя области
+            if (id(screen_state) == 0) {
+              // menu: tap areas to select
+              if (y > 40 && y < 70) id(menu_idx) = 0;
+              if (y > 70 && y < 100) id(menu_idx) = 1;
+              if (y > 100 && y < 130) id(menu_idx) = 2;
+              // tap to open selected
+              if (x > 10 && x < 310) {
+                if (id(menu_idx) == 0) id(screen_state) = 1;
+                if (id(menu_idx) == 1) id(screen_state) = 2;
+                if (id(menu_idx) == 2) id(screen_state) = 3;
+              }
+            } else {
+              // any touch returns to menu
+              id(screen_state) = 0;
+            }
+
+# ---------- Globals to share UI state ----------
+globals:
+  - id: screen_state
+    type: int
+    initial_value: '0'
+  - id: menu_idx
+    type: int
+    initial_value: '0'
+  - id: snake_dx
+    type: int
+    initial_value: '4'
+  - id: current_time
+    type: int
+    initial_value: '0'
+  - id: time_valid
+    type: bool
+    initial_value: 'false'
+
+# ---------- Time (NTP) ----------
+time:
+  - platform: sntp
+    id: sntp_time
+    on_time:
+      then:
+        - lambda: |-
+            id(time_valid) = true;
+            id(current_time) = (int)time(nullptr);
+
+# ---------- Example sensors / status ----------
 status_led:
-  pin:
-    number: GPIO2
-    inverted: false
+  pin: 2
+
+# ---------- Example binary sensor for physical buttons (если есть) ----------
+# binary_sensor:
+#   - platform: gpio
+#     pin: 0
+#     name: "Button"
+#     on_press:
+#       then:
+#         - lambda: |-
+#             // кнопки можно использовать для управления играми
+esphome:
+  name: esp32_2432s028_games
+
+# Платформу `ESP32` указываем в отдельном блоке `esp32` (новый стиль конфигурации)
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# ---------- WIFI / OTA / API ----------
+wifi:
+  ssid: "YOUR_WIFI"
+  password: "YOUR_PASS"
+
+logger:
+  level: DEBUG
+
+api:
+
+ota:
+  platform: esphome
+
