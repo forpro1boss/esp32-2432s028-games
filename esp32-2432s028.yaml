@@ -43,12 +43,12 @@ display:
     rotation: 0
     lambda: |-
       // простой UI: меню / игры / часы
-      static int screen = 0; // 0=menu,1=snake,2=tetris,3=clock
+      // use the global `screen_state` so touchscreen changes affect the display
       static unsigned long last_update = 0;
       unsigned long now = millis();
 
       // draw menu
-      if (screen == 0) {
+      if (id(screen_state) == 0) {
         it.fill(COLOR_BLACK);
         it.printf(16, 10, id(font24), "ESP32 Games");
         it.printf(16, 50, id(font18), "%s Snake", (id(menu_idx)==0) ? ">" : " ");
@@ -58,7 +58,7 @@ display:
       }
 
       // simple snake (very basic, playable-ish on ESPhome)
-      if (screen == 1) {
+      if (id(screen_state) == 1) {
         // draw border
         it.fill(COLOR_BLACK);
         it.printf(6, 4, id(font18), "Snake");
@@ -75,7 +75,7 @@ display:
       }
 
       // simple tetris placeholder (falling block)
-      if (screen == 2) {
+      if (id(screen_state) == 2) {
         it.fill(COLOR_BLACK);
         it.printf(6, 4, id(font18), "Tetris");
         static int ty = 0;
@@ -85,7 +85,7 @@ display:
       }
 
       // clock screen
-      if (screen == 3) {
+      if (id(screen_state) == 3) {
         it.fill(COLOR_BLACK);
         it.printf(16, 10, id(font24), "Clock");
         // use time component to get current time
@@ -127,24 +127,24 @@ touchscreen:
     spi_id: spi_bus
     update_interval: 50ms
     calibration:
-      min_x: 300
-      max_x: 3800
-      min_y: 300
-      max_y: 3800
+      x_min: 300
+      x_max: 3800
+      y_min: 300
+      y_max: 3800
     on_touch:
       then:
         - lambda: |-
-            // Координаты тача (0..4095) -> нормируем на разрешение 320x240
-            int x = int(x_raw * 320.0 / 4095.0);
-            int y = int(y_raw * 240.0 / 4095.0);
+            // ESPhome provides `x` and `y` coordinates (already scaled to touchscreen resolution)
+            int tx = (int)x;
+            int ty = (int)y;
             // simple mapping for menu: верхняя/нижняя области
             if (id(screen_state) == 0) {
               // menu: tap areas to select
-              if (y > 40 && y < 70) id(menu_idx) = 0;
-              if (y > 70 && y < 100) id(menu_idx) = 1;
-              if (y > 100 && y < 130) id(menu_idx) = 2;
+              if (ty > 40 && ty < 70) id(menu_idx) = 0;
+              if (ty > 70 && ty < 100) id(menu_idx) = 1;
+              if (ty > 100 && ty < 130) id(menu_idx) = 2;
               // tap to open selected
-              if (x > 10 && x < 310) {
+              if (tx > 10 && tx < 310) {
                 if (id(menu_idx) == 0) id(screen_state) = 1;
                 if (id(menu_idx) == 1) id(screen_state) = 2;
                 if (id(menu_idx) == 2) id(screen_state) = 3;
