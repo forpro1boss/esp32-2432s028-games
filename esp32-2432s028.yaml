@@ -126,7 +126,11 @@ touchscreen:
     interrupt_pin: 15     # T_IRQ (если нет IRQ, можно не указывать)
     spi_id: spi_bus
     update_interval: 50ms
-    calibration: [300, 3800, 300, 3800]
+    calibration:
+      min_x: 300
+      max_x: 3800
+      min_y: 300
+      max_y: 3800
     on_touch:
       then:
         - lambda: |-
