@@ -1,6 +1,7 @@
 esphome:
   name: esp32_2432s028
-  platform: ESP32
+
+esp32:
   board: esp32dev
 
 wifi:
