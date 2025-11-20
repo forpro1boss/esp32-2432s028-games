@@ -24,6 +24,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install esphome
 
+      - name: Download fallback font
+        run: |
+          mkdir -p fonts
+          curl -fsSL -o fonts/Roboto-Regular.ttf https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans.ttf || true
+        shell: bash
+
       - name: Compile firmware
         run: |
           esphome compile esp32-2432s028.yaml
