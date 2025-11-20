@@ -13,10 +13,12 @@ wifi:
 
 logger:
 
+# API (default settings)
 api:
 
+# OTA: specify platform for newer ESPHome versions
 ota:
-
+  platform: esphome
 # Simple status LED example (adjust pin as needed)
 status_led:
   pin:
