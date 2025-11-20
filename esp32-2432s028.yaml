@@ -35,6 +35,7 @@ spi:
 display:
   - platform: ili9xxx
     model: ili9341
+    invert_colors: false
     cs_pin: 5
     dc_pin: 16
     reset_pin: 17
