@@ -1,0 +1,23 @@
+esphome:
+  name: esp32_2432s028
+  platform: ESP32
+  board: esp32dev
+
+wifi:
+  ssid: "YOUR_SSID"
+  password: "YOUR_PASSWORD"
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Esp32 Fallback AP"
+
+logger:
+
+api:
+
+ota:
+
+# Simple status LED example (adjust pin as needed)
+status_led:
+  pin:
+    number: GPIO2
+    inverted: false
