@@ -118,15 +118,13 @@ font:
 
 # ---------- Touchscreen XPT2046 ----------
 # Подключается через SPI. Убедись, что CS и IRQ совпадают с твоими проводами.
-xpt2046:
-  cs_pin: 21            # поменяй если у тебя другой CS
-  irq_pin: 15           # T_IRQ (если нет IRQ, можно не указывать)
-  spi_id: spi
-
 touchscreen:
   - platform: xpt2046
     name: "TFT Touch"
     id: tft_touch
+    cs_pin: 21            # поменяй если у тебя другой CS
+    irq_pin: 15           # T_IRQ (если нет IRQ, можно не указывать)
+    spi_id: spi
     update_interval: 50ms
     on_touch:
       then:
